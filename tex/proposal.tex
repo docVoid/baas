@@ -1,0 +1,247 @@
+\documentclass[11pt]{article}
+\usepackage{amsfonts,amsmath,amssymb,amsthm}
+\usepackage{array}
+\usepackage{bm}
+\usepackage{commath}
+\usepackage{enumitem}
+\usepackage{fancyhdr,fancyvrb}
+\usepackage[letterpaper,text={7in,9in},centering]{geometry}
+\usepackage[pdftex]{graphicx}
+\usepackage{ifthen}
+\usepackage{mathrsfs}
+\usepackage{multicol}
+\usepackage{pifont}
+\usepackage{sectsty}
+\usepackage{setspace}
+\usepackage{stackrel}
+\usepackage{stmaryrd}
+\usepackage{tensor}
+\usepackage{xspace}
+\usepackage{natbib}
+
+\pagestyle{fancy}
+\fancyhead[RO]{Edward Gan \& Max Wang}
+
+\sectionfont{\large}
+\subsectionfont{\normalsize}
+
+\newcommand{\Sequitur}{\textsc{Sequitur}\xspace}
+
+\begin{document}
+\bibliographystyle{plain}
+
+\title{Proposal: Loose Grammar Inference for Lossy Compression}
+\author{Edward Gan \& Max Wang}
+\date{October 17, 2012}
+\maketitle
+
+\section{Introduction and Goals}
+
+Many sources of data exhibit natural hierarchical structure, but it is often
+difficult to apprehend this structure at a high level due to small fluctuations
+at the lower levels of the hierarchy.  If one is interested primarily in the
+structure of the data, a lossy compression scheme has the potential to mitigate
+some of this low-level noise in favor of the high-level signal, and can greatly
+reduce the compressed data size.
+
+One method of exploring, and then compressing, the hierarchical structure of
+data is to transform the data into a grammar.  The \Sequitur algorithm of
+\cite{sequitur} does exactly this, demonstrating how context-free grammars in
+particular offer a means of simultaneously revealing the structure of data
+inputs and compressing it efficiently.  However, inspection of \Sequitur's
+results reveals that it is unable to detect and to compress larger scale
+structure because of the aforementioned low-level fluctuations.
+
+We are interested in whether lossy compression techniques can be combined with
+CFG transformation and compression techniques like \Sequitur's in order (a) to
+illuminate the high-level grammatical structure of the data, and (b) to more
+effectively compress the data with some tolerable degree of lossiness.  That
+is, our goals are twofold---we wish to develop a technique which can both
+increase human understanding of a complex document and yield good compression
+ratios.  Notably, if we are interested in the structure rather than the
+details, we surmise that the lossiness we introduce can be highly desirable.
+For instance, introducing lossiness to \Sequitur's transformation on musical
+passages could result in interesting, even music-theoretically sound,
+reductions of a given piece.
+
+As with \Sequitur, the scope of our problem will encompass the full conversion
+pathway of the input data---both the grammar transformation and the grammar
+compression steps---and we will consider introducing lossiness at each point in
+the process.
+
+There seems to be little existing work done in the intersection of grammar
+compression and lossy compression.  Thus, we will compare our work to existing
+techniques both in lossless hierarchical compression and lossy non-hierarchical
+compression.  Moreover, we are not too concerned with fitting our lossy grammar
+compression into information theoretical developments, since our main concerns
+are achieving interesting human comprehensible compressions with reasonable
+fidelity and good ratios as a benchmark.
+
+\section{Background}
+
+Though we have not found very much previous work in the area of lossy grammar
+based compression, our proposed research will try to build upon established
+results in grammar based compression and incorporate some of ideas currently
+used in lossy compression algorithms.
+
+\subsection{Grammar Compression}
+
+As described in the introduction, the proposed research shares many of its
+goals with the \Sequitur algorithm described in \cite{sequitur}.  The authors
+of \cite{sequitur} develop an effective algorithm based on iteratively
+rewriting grammars to keep them small and efficient, and produce interesting
+grammar-based analyses of texts and musical scores.  In \cite{sequitur2}, the
+detailed compression scheme used in the \Sequitur algorithm is described.  By
+sending the grammar over in an implicit, local-pointer based scheme, they are
+able to represent the grammar with very little overhead.  A similar scheme
+should be easily adaptable to any grammar based compression scheme.
+
+Finally, within the realm of \Sequitur based compression, \cite{nevillphd}
+explores a variety of ad-hoc extensions to the \Sequitur algorithm which
+improve its compression performance on structured data.  These ranged from
+introducing domain-specific constraints to their grammar, adding a few steps of
+backtracking to their normally greedy grammar formation, to guessing
+unifications in attempting to infer recursive grammar rules.  Though these may
+invalidate some of their theoretical results on the asymptotic performance of
+\Sequitur, in practice they seem to have worked and add nicely to the grammar
+inference framework.
+
+The intution that grammar inference can support many detailed policies is made
+more formal in \cite{grammarcodes}.  The authors classify the properties a
+grammar needs to function as a good compressor, and moreover give a set of
+reduction rules for putting a grammar into the appropriate form.  Within this
+context, grammar inference algorithms similar to \Sequitur can be described as
+simple applications of their reduction rules to different ways of generating
+base grammars.  Even more examples of the variety of grammar inference schemes
+possible under this general framework of reducing grammars can be found in
+\cite{efficientgreedy}
+
+There has also been very interesting work analyzing how grammar based
+algorithms compare with the theoretical best lossless grammar for a string, in
+the line of \cite{approximation}.  However, these analytic bounds for lossless
+grammars are outside the scope of our proposed research.
+
+In summary, established work on grammar inference algorithms provides a solid
+set of tools for experimenting with the kinds of local modifications we propose
+to make to improve grammar structure by introducing lossiness.
+
+\subsection{Lossy Compression}
+
+While we were unable to find work in the area of lossy grammar compression, a
+number of existing techniques for lossy hierarchical compression more broadly
+may be applicable.  Kieffer notes that lossless hierarchical compression
+methods, including context-free grammars, can be used interchangeably to
+equivalently represent the structure of a given input \cite{tutorial}.
+However, we found no such claims for lossy hierarchical compression methods.
+
+Kieffer briefly identifies two primary methods for lossy hierarchical
+compression: wavelet-based and fractal-based schemes \cite{tutorial}.  In
+wavelet-based schemas, a signal is compressed by recording the largest
+coefficients of its wavelet decomposition, given a suitable wavelet function.
+Clustered coefficients can be stored in a compact form and used to encode
+hierarchical structure.  The JPEG image format uses a similar technique in
+order to compress images lossily \cite{jpeg}.
+
+In fractal compression, we wish to determine a set of contraction maps $w_i$
+over the domain of the data such that the fixed point of the $W(B) = \bigcup
+w_i(B)$ is the data set itself.  In this way, this fractal transform captures
+the self-similarity of an input by equating it with a covering of contractions
+of itself.  By restricting $w_i$ in, say, image compression, to affine
+transformations, we can easily represent each contraction map by a small
+sequence of coefficients.  Barnsley describes how to ``home in'' on the right
+coefficients to approximately represent a given input.  Interestingly, fractal
+compression on images can sometimes produce results which appear to be of much
+higher resolution than the original, which suggests that the technique provides
+some great measure of insight into the data's structure.
+
+Witten, \emph{et.\ al.}\ apply fractal compression to the area of text
+compression in order to generate texts which approximate a given input.  This
+yields a extraordinarily high compression ratio at the expense of time.  The
+authors do not supply their algorithm for fractal-based generation, but suggest
+that their particular algorithm may only be applicable to a certain style of
+prosaic text.
+
+Work has also been done regarding the lossy compression of particular input
+formats.  For text, methods such as replacing words with synonyms
+\cite{semanticlossy} or reordering the middle letters of a word (i.e., all
+letters save for the first and last) \cite{semilossless} have been explored.
+Applying such methods before transforming text into a grammar might yield
+interesting structural results, although we suspect that, as non-hierarchical
+schemes, they may not.
+
+We will try to adapt this variety of lossy compression techniques to function
+at the different points in the process of converting data into the form of a
+compressed grammar.
+
+\section{Research Plan}
+
+The proposed research project will involve designing new lossy grammar
+compression algorithms, implementing them, and comparing their performance with
+existing methods.  If time permits we would also like to prove lower bounds on
+the runtime of our algorithm and upper bounds on the size of the grammar it
+generates.
+
+\subsection{Algorithm Design}
+
+Starting with an existing grammar inference algorithm, or perhaps with a simple
+variation based on the reduction rules in \cite{grammarcodes}, there are three
+places we might introduce lossiness into the system.  We could
+\begin{itemize}
+  \item perform text-transforms on the input before applying grammar
+    inference algorithms;
+  \item modify the grammar inference algorithm so that it generates a lossy
+    grammar on the fly; or
+  \item take a lossless grammar code and apply lossy transforms to it.
+\end{itemize}
+Of these, the first could provide the biggest potential for taking advantage of
+source-specific knowledge of what kinds of data we can ignore.  The second
+allows the most control over precisely how a grammar can be formed, and would
+not be too difficult, we expect, to build into reduction-rule based frameworks.
+The third would be the most general, since it could be applied to any CFG, but
+may be difficult to get consistent performance from.
+
+After a lossy CFG is obtained, we plan on using standard methods for encoding
+the CFG such as those described in \cite{sequitur2}
+
+\subsection{Evaluation Methodology}
+
+There are two important metrics we plan on evaluating our algorithm with.
+First, the lossiness it introduces should allow it to compress very well. This
+can be quantified by comparing its compression ratio with other grammar based
+and general compression schemes on text sources, especially semi-structured
+text which might best exhibit nearly hierarchical data.
+
+We would also like to make use of our algorithm to reveal the inherent
+structure in text data. Our hope is that allowing lossiness will alow it to
+capture larger scale structures, so we plan on subjectively evaluating the CFGs
+produced for how well they group the components that a human might perceive in
+pieces of text.
+
+Comparing our runtime with existing algorithms can be done in a straightforward
+way. Though our main focus will be on smaller datasets with human-readable
+structures, we will also experiment to see the effects of lossiness on
+scalability.
+
+We plan on evaluating our algorithm on standard english prose texts, but we
+also suspect that the texts which will prove most interesting to analyze are
+those with slightly more structure imposed on them. Human-made tables such as
+the genealogical trees discussed in \cite{nevillphd} are a good example, as are
+simple musical pieces. Slightly more artificial examples we might try include
+strings generated from actual CFGs but with small amounts of noise added in.
+These will reveal best case behavior in compressing a nearly-perfectly
+structured dataset.
+
+\subsection{Resources}
+
+The primary resources we will require is source code or a functioning binary
+for the existing lossy compression, grammar transformation, and grammar
+compression algorithms we wish to use for our overall lossy grammar compression
+scheme.
+
+\subsection{Possible Issues}
+
+\nocite{*}
+
+\bibliography{sources}
+
+\end{document}
